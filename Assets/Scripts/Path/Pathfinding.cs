@@ -63,6 +63,21 @@ public class Pathfinding : MonoBehaviour
         }
     }
 
+    public void RequestPath(GameObject owner, Vector3 startPos)
+    {
+        if (pathThread == null || !pathThread.IsAlive)
+        {
+            pathThread = new Thread(new ParameterizedThreadStart(HandleFindPath));
+            pathThread.IsBackground = true;
+            pathThread.Start(new PathRequest(owner, startPos, grid.RandomNode().worldPosition));
+        }
+        else
+            lock (requestLock)
+            {
+                pathRequests.Enqueue(new PathRequest(owner, startPos, grid.RandomNode().worldPosition));
+            }
+    }
+
     public void RequestPath(GameObject owner, Vector3 startPos, Vector3 endPos)
     {
         if (pathThread == null || !pathThread.IsAlive)

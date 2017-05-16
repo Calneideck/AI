@@ -10,7 +10,6 @@ public class Grid : MonoBehaviour
     private static float nodeDiameter;
 
     public LayerMask unwalkableMask;
-    public LayerMask unbuildableMask;
     public Vector2 gridWorldSize;
     public float nodeRadius;
     public bool DrawNodes;
@@ -102,6 +101,16 @@ public class Grid : MonoBehaviour
         nodeGrid[topLeftX + 1, topLeftY].walkable = walkable;
         nodeGrid[topLeftX, topLeftY - 1].walkable = walkable;
         nodeGrid[topLeftX + 1, topLeftY - 1].walkable = walkable;
+    }
+
+    public Node RandomNode()
+    {
+        while (true)
+        {
+            Node n = nodeGrid[Random.Range(0, gridSizeX), Random.Range(0, gridSizeY)];
+            if (n.walkable)
+                return n;
+        }
     }
 
     void OnDrawGizmos()

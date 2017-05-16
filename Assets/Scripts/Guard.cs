@@ -21,7 +21,9 @@ public class Guard : MonoBehaviour
             return;
 
         Vector3 target = path[pathIndex];
-        transform.Translate((target - transform.position).normalized * speed * Time.deltaTime);
+        target.y = 0.6f;
+        transform.Translate((target - transform.position).normalized * speed * Time.deltaTime, Space.World);
+        transform.LookAt(target);
 
         if (Vector3.Distance(transform.position, target) < 0.2f)
         {
@@ -44,6 +46,16 @@ public class Guard : MonoBehaviour
         {
             Pathfinding.instance.RequestPath(gameObject, transform.position, new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f)));
             requestingPath = true;
+        }
+    }
+
+    private void OnDrawGizmos()
+    {
+        if (path != null)
+        {
+            Gizmos.color = Color.black;
+            for (int i = 1; i < path.Length; i++)
+                Gizmos.DrawLine(path[i - 1], path[i]);
         }
     }
 }
