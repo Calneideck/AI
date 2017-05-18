@@ -51,29 +51,25 @@ public class Grid : MonoBehaviour
                 if (x == 0 && y == 0)
                     continue;
 
-                // Diagonal
-                //if ((x == -1 && y == -1) || (x == 1 && y == -1) || (x == 1 && y == 1) || (x == -1 && y == 1))
-                //    continue;
-
                 int checkX = node.gridX + x;
                 int checkY = node.gridY + y;
 
                 if (checkX >= 0 && checkX < gridSizeX && checkY >= 0 && checkY < gridSizeY)
                 {
                     if (x == -1 && y == -1)
-                        if (!nodeGrid[node.gridX - 1, node.gridY + 0].Walkable && !nodeGrid[node.gridX + 0, node.gridY - 1].Walkable)
+                        if (!nodeGrid[node.gridX - 1, node.gridY + 0].Walkable || !nodeGrid[node.gridX + 0, node.gridY - 1].Walkable)
                             continue;
 
                     if (x == 1 && y == -1)
-                        if (!nodeGrid[node.gridX + 0, node.gridY - 1].Walkable && !nodeGrid[node.gridX + 1, node.gridY + 0].Walkable)
+                        if (!nodeGrid[node.gridX + 0, node.gridY - 1].Walkable || !nodeGrid[node.gridX + 1, node.gridY + 0].Walkable)
                             continue;
 
                     if (x == 1 && y == 1)
-                        if (!nodeGrid[node.gridX + 0, node.gridY + 1].Walkable && !nodeGrid[node.gridX + 1, node.gridY + 0].Walkable)
+                        if (!nodeGrid[node.gridX + 0, node.gridY + 1].Walkable || !nodeGrid[node.gridX + 1, node.gridY + 0].Walkable)
                             continue;
 
                     if (x == -1 && y == 1)
-                        if (!nodeGrid[node.gridX + 0, node.gridY + 1].Walkable && !nodeGrid[node.gridX - 1, node.gridY + 0].Walkable)
+                        if (!nodeGrid[node.gridX + 0, node.gridY + 1].Walkable || !nodeGrid[node.gridX - 1, node.gridY + 0].Walkable)
                             continue;
 
                     neighbours.Add(nodeGrid[checkX, checkY]);
@@ -93,14 +89,6 @@ public class Grid : MonoBehaviour
         int x = Mathf.RoundToInt((gridSizeX - 1) * percentX);
         int y = Mathf.RoundToInt((gridSizeY - 1) * percentY);
         return nodeGrid[x, y];
-    }
-
-    public void ChangeNodeStatus(bool walkable, int topLeftX, int topLeftY)
-    {
-        nodeGrid[topLeftX, topLeftY].walkable = walkable;
-        nodeGrid[topLeftX + 1, topLeftY].walkable = walkable;
-        nodeGrid[topLeftX, topLeftY - 1].walkable = walkable;
-        nodeGrid[topLeftX + 1, topLeftY - 1].walkable = walkable;
     }
 
     public Node RandomNode()

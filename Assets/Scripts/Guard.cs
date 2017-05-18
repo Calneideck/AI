@@ -12,7 +12,7 @@ public class Guard : MonoBehaviour
 
     void Start()
     {
-        Pathfinding.instance.RequestPath(gameObject, transform.position, new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f)));
+        Pathfinding.instance.RequestPath(gameObject, transform.position);
     }
 
     void Update()
@@ -30,7 +30,7 @@ public class Guard : MonoBehaviour
             pathIndex++;
             if (pathIndex == path.Length)
             {
-                Pathfinding.instance.RequestPath(gameObject, transform.position, new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f)));
+                Pathfinding.instance.RequestPath(gameObject, transform.position);
                 requestingPath = true;
             }
         }
@@ -44,7 +44,7 @@ public class Guard : MonoBehaviour
 
         if (path.Length == 0)
         {
-            Pathfinding.instance.RequestPath(gameObject, transform.position, new Vector3(Random.Range(-5f, 5f), 0, Random.Range(-5f, 5f)));
+            Pathfinding.instance.RequestPath(gameObject, transform.position);
             requestingPath = true;
         }
     }
@@ -53,7 +53,7 @@ public class Guard : MonoBehaviour
     {
         if (path != null)
         {
-            Gizmos.color = Color.black;
+            Gizmos.color = Color.red;
             for (int i = 1; i < path.Length; i++)
                 Gizmos.DrawLine(path[i - 1], path[i]);
         }
