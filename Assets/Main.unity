@@ -2113,7 +2113,7 @@ Prefab:
       objectReference: {fileID: 0}
     - target: {fileID: 4835754588201566, guid: e00bfbd7ec58ea344b39fd5e451c5cb2, type: 2}
       propertyPath: m_LocalPosition.z
-      value: -6.07
+      value: -1.98
       objectReference: {fileID: 0}
     - target: {fileID: 4835754588201566, guid: e00bfbd7ec58ea344b39fd5e451c5cb2, type: 2}
       propertyPath: m_LocalRotation.x
@@ -2138,6 +2138,11 @@ Prefab:
     - target: {fileID: 1886377659045876, guid: e00bfbd7ec58ea344b39fd5e451c5cb2, type: 2}
       propertyPath: m_Name
       value: Guard (3)
+      objectReference: {fileID: 0}
+    - target: {fileID: 114315012166026756, guid: e00bfbd7ec58ea344b39fd5e451c5cb2,
+        type: 2}
+      propertyPath: wallMask.m_Bits
+      value: 256
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e00bfbd7ec58ea344b39fd5e451c5cb2, type: 2}
@@ -2989,7 +2994,7 @@ GameObject:
   - component: {fileID: 1333913076}
   - component: {fileID: 1333913075}
   m_Layer: 0
-  m_Name: Pool
+  m_Name: ObjectPool
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

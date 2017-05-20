@@ -17,7 +17,7 @@ public class ObjectPooler : MonoBehaviour
         pools.Add(prefab, new List<GameObject>());
         for (int i = 0; i < initialPoolSize; i++)
         {
-            GameObject obj = (GameObject)GameObject.Instantiate(prefab);
+            GameObject obj = (GameObject)GameObject.Instantiate(prefab, transform);
             pools[prefab].Add(obj);
             obj.SetActive(false);
         }

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class Guard : MonoBehaviour
 {
-    private enum State { PATROLLING, ENGAGING, RELOADING, ALERTED };
+    public enum State { PATROLLING, ENGAGING, RELOADING, ALERTED };
     private State state = State.PATROLLING;
 
     private Vector3[] path;
@@ -35,9 +35,10 @@ public class Guard : MonoBehaviour
         {
             case State.PATROLLING:
                 Move();
+                DetectPlayer();
                 break;
             case State.ENGAGING:
-
+                Engage();
                 break;
             case State.ALERTED:
 
@@ -47,8 +48,7 @@ public class Guard : MonoBehaviour
 
                 break;
         }
-
-        DetectPlayer();
+        
         detectionImage.transform.parent.rotation = Quaternion.Euler(Vector3.right * 90);
     }
 
@@ -56,17 +56,21 @@ public class Guard : MonoBehaviour
     {
         // Check if has line of sight
         RaycastHit wallHit;
-        if (Physics.Raycast(transform.position, player.transform.position - transform.position, out wallHit, 100, wallMask))
-            if (wallHit.collider != null)
-            {
-                detection = 1 - Mathf.InverseLerp(minSightRange, maxSightRange, (player.transform.position - transform.position).sqrMagnitude);
+        if (!Physics.Raycast(transform.position, player.transform.position - transform.position, out wallHit, Vector3.Distance(transform.position, player.transform.position), wallMask))
+        {
+            detection = 1 - Mathf.InverseLerp(minSightRange, maxSightRange, (player.transform.position - transform.position).sqrMagnitude);
 
-                float los = 1;
-                if (Vector3.Angle(player.transform.position - transform.position, transform.forward) < 60)
-                    los = 1.4f;
+            float los = 1;
+            if (Vector3.Angle(player.transform.position - transform.position, transform.forward) < 60)
+                los = 1.4f;
 
-                detection *= los;
-            }
+            detection *= los;
+        }
+        else
+            detection = 0;
+
+        if (detection >= 1)
+            state = State.ENGAGING;
 
         detectionImage.fillAmount = detection;
     }
@@ -90,6 +94,12 @@ public class Guard : MonoBehaviour
                 requestingPath = true;
             }
         }
+    }
+
+    void Engage()
+    {
+        transform.Translate((player.transform.position - transform.position).normalized * speed * Time.deltaTime, Space.World);
+        transform.LookAt(player.transform.position);
     }
 
     public void PathReceived(Vector3[] path)
@@ -120,5 +130,10 @@ public class Guard : MonoBehaviour
             Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? Mathf.Sqrt(minSightRange) : minSightRange);
             Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? Mathf.Sqrt(maxSightRange) : maxSightRange);
         }
+    }
+
+    public State GuardState
+    {
+        get { return state; }
     }
 }
