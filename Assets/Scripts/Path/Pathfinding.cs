@@ -63,6 +63,9 @@ public class Pathfinding : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// Request a path to a random position
+    /// </summary>
     public void RequestPath(GameObject owner, Vector3 startPos)
     {
         if (pathThread == null || !pathThread.IsAlive)
@@ -78,6 +81,9 @@ public class Pathfinding : MonoBehaviour
             }
     }
 
+    /// <summary>
+    /// Request a path to a specific location
+    /// </summary>
     public void RequestPath(GameObject owner, Vector3 startPos, Vector3 endPos)
     {
         if (pathThread == null || !pathThread.IsAlive)
@@ -177,9 +183,6 @@ public class Pathfinding : MonoBehaviour
         int dstX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
         int dstY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
 
-        //if (dstX > dstY)
-        //    return 14 * dstY + 10 * (dstX - dstY);
-        //return 14 * dstX + 10 * (dstY - dstX);
         return dstX == dstY ? 14 : 10;
     }
 }

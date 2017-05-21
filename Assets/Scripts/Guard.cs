@@ -34,7 +34,7 @@ public class Guard : MonoBehaviour
         switch (state)
         {
             case State.PATROLLING:
-                Move();
+                Patrol();
                 DetectPlayer();
                 break;
             case State.ENGAGING:
@@ -70,12 +70,15 @@ public class Guard : MonoBehaviour
             detection = 0;
 
         if (detection >= 1)
+        {
+            Pathfinding.instance.RequestPath(gameObject, transform.position, player.transform.position);
             state = State.ENGAGING;
+        }
 
         detectionImage.fillAmount = detection;
     }
 
-    void Move()
+    void Patrol()
     {
         if (requestingPath)
             return;
@@ -98,8 +101,23 @@ public class Guard : MonoBehaviour
 
     void Engage()
     {
-        transform.Translate((player.transform.position - transform.position).normalized * speed * Time.deltaTime, Space.World);
-        transform.LookAt(player.transform.position);
+        if (requestingPath)
+            return;
+
+        Vector3 target = path[pathIndex];
+        target.y = 0.3f;
+        transform.Translate((target - transform.position).normalized * speed * Time.deltaTime, Space.World);
+        transform.LookAt(target);
+
+        if ((target - transform.position).sqrMagnitude < 0.04f)
+        {
+            pathIndex++;
+            if (pathIndex == path.Length)
+            {
+                Pathfinding.instance.RequestPath(gameObject, transform.position, player.transform.position);
+                requestingPath = true;
+            }
+        }
     }
 
     public void PathReceived(Vector3[] path)
