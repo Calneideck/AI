@@ -11,7 +11,7 @@ public class Bullet : MonoBehaviour
     IEnumerator Start()
     {
         yield return new WaitForSeconds(5);
-        GameObject.Destroy(gameObject);
+        gameObject.SetActive(false);
     }
 
     public void Setup(Vector3 dir)
@@ -32,6 +32,6 @@ public class Bullet : MonoBehaviour
                 gameObject.SetActive(false);
             }
 
-        transform.Translate(velocity);
+        transform.Translate(velocity, Space.World);
 	}
 }

@@ -12,18 +12,22 @@ public class Guard : MonoBehaviour
     private int pathIndex;
     private bool requestingPath = true;
     private Player player;
+    private float lastShootTime;
 
     public float detection = 0;
 
     public float speed = 4;
     public float minSightRange;
     public float maxSightRange;
+    public float shootCooldown;
+    public GameObject bulletPrefab;
     public Image detectionImage;
     public LayerMask wallMask;
 
     void Start()
     {
         Pathfinding.instance.RequestPath(gameObject, transform.position);
+        ObjectPooler.instance.Setup(bulletPrefab, 2);
         player = GameObject.Find("Player").GetComponent<Player>();
         minSightRange *= minSightRange;
         maxSightRange *= maxSightRange;
@@ -54,9 +58,7 @@ public class Guard : MonoBehaviour
 
     void DetectPlayer()
     {
-        // Check if has line of sight
-        RaycastHit wallHit;
-        if (!Physics.Raycast(transform.position, player.transform.position - transform.position, out wallHit, Vector3.Distance(transform.position, player.transform.position), wallMask))
+        if (CanSeePlayer)
         {
             detection = 1 - Mathf.InverseLerp(minSightRange, maxSightRange, (player.transform.position - transform.position).sqrMagnitude);
 
@@ -101,15 +103,25 @@ public class Guard : MonoBehaviour
 
     void Engage()
     {
+        if (Time.time - lastShootTime >= shootCooldown && CanSeePlayer)
+        {
+            GameObject bullet = ObjectPooler.instance.GetObject(bulletPrefab);
+            bullet.transform.position = transform.position + transform.forward * 0.4f;
+            Vector3 shootTarget = player.transform.position - transform.position;
+            shootTarget.y = 0;
+            bullet.GetComponent<Bullet>().Setup(shootTarget);
+            lastShootTime = Time.time;
+        }
+
         if (requestingPath)
             return;
 
-        Vector3 target = path[pathIndex];
-        target.y = 0.3f;
-        transform.Translate((target - transform.position).normalized * speed * Time.deltaTime, Space.World);
-        transform.LookAt(target);
+        Vector3 moveTarget = path[pathIndex];
+        moveTarget.y = 0.3f;
+        transform.Translate((moveTarget - transform.position).normalized * speed * Time.deltaTime, Space.World);
+        transform.LookAt(moveTarget);
 
-        if ((target - transform.position).sqrMagnitude < 0.04f)
+        if ((moveTarget - transform.position).sqrMagnitude < 0.04f)
         {
             pathIndex++;
             if (pathIndex == path.Length)
@@ -147,6 +159,15 @@ public class Guard : MonoBehaviour
             Gizmos.color = Color.white;
             Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? Mathf.Sqrt(minSightRange) : minSightRange);
             Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? Mathf.Sqrt(maxSightRange) : maxSightRange);
+        }
+    }
+
+    bool CanSeePlayer
+    {
+        get
+        {
+            RaycastHit wallHit;
+            return !Physics.Raycast(transform.position, player.transform.position - transform.position, out wallHit, Vector3.Distance(transform.position, player.transform.position), wallMask);
         }
     }
 
