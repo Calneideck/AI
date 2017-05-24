@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class Guard : MonoBehaviour
 {
-    public enum State { PATROLLING, ENGAGING, RELOADING, ALERTED };
+    public enum State { PATROLLING, SEEKING, ENGAGING };
     private State state = State.PATROLLING;
 
     private Vector3[] path;
@@ -13,6 +13,7 @@ public class Guard : MonoBehaviour
     private bool requestingPath = true;
     private Player player;
     private float lastShootTime;
+    private BehaviourTree bTree;
 
     public float detection = 0;
 
@@ -26,6 +27,7 @@ public class Guard : MonoBehaviour
 
     void Start()
     {
+        bTree = GetComponent<BehaviourTree>();
         Pathfinding.instance.RequestPath(gameObject, transform.position);
         ObjectPooler.instance.Setup(bulletPrefab, 2);
         player = GameObject.Find("Player").GetComponent<Player>();
@@ -38,18 +40,15 @@ public class Guard : MonoBehaviour
         switch (state)
         {
             case State.PATROLLING:
-                Patrol();
+                if (bTree.Patrol.Update() == BNode.ResultState.SUCCESS)
+                    bTree.Patrol.Reset();
                 DetectPlayer();
+                break;
+            case State.SEEKING:
+                
                 break;
             case State.ENGAGING:
                 Engage();
-                break;
-            case State.ALERTED:
-
-                break;
-            case State.RELOADING:
-
-
                 break;
         }
         
@@ -80,11 +79,8 @@ public class Guard : MonoBehaviour
         detectionImage.fillAmount = detection;
     }
 
-    void Patrol()
+    public BNode.ResultState FollowPath()
     {
-        if (requestingPath)
-            return;
-
         Vector3 target = path[pathIndex];
         target.y = 0.3f;
         transform.Translate((target - transform.position).normalized * speed * Time.deltaTime, Space.World);
@@ -94,11 +90,16 @@ public class Guard : MonoBehaviour
         {
             pathIndex++;
             if (pathIndex == path.Length)
-            {
-                Pathfinding.instance.RequestPath(gameObject, transform.position);
-                requestingPath = true;
-            }
+                return BNode.ResultState.SUCCESS;
         }
+
+        return BNode.ResultState.RUNNING;
+    }
+
+    public BNode.ResultState Search()
+    {
+        print("searching");
+        return BNode.ResultState.RUNNING;
     }
 
     void Engage()
