@@ -66,36 +66,36 @@ public class Pathfinding : MonoBehaviour
     /// <summary>
     /// Request a path to a random position
     /// </summary>
-    public void RequestPath(GameObject owner, Vector3 startPos)
+    public void RequestPath(GameObject owner)
     {
         if (pathThread == null || !pathThread.IsAlive)
         {
             pathThread = new Thread(new ParameterizedThreadStart(HandleFindPath));
             pathThread.IsBackground = true;
-            pathThread.Start(new PathRequest(owner, startPos, grid.RandomNode().worldPosition));
+            pathThread.Start(new PathRequest(owner, owner.transform.position, grid.RandomNode().worldPosition));
         }
         else
             lock (requestLock)
             {
-                pathRequests.Enqueue(new PathRequest(owner, startPos, grid.RandomNode().worldPosition));
+                pathRequests.Enqueue(new PathRequest(owner, owner.transform.position, grid.RandomNode().worldPosition));
             }
     }
 
     /// <summary>
     /// Request a path to a specific location
     /// </summary>
-    public void RequestPath(GameObject owner, Vector3 startPos, Vector3 endPos)
+    public void RequestPath(GameObject owner, Vector3 endPos)
     {
         if (pathThread == null || !pathThread.IsAlive)
         {
             pathThread = new Thread(new ParameterizedThreadStart(HandleFindPath));
             pathThread.IsBackground = true;
-            pathThread.Start(new PathRequest(owner, startPos, endPos));
+            pathThread.Start(new PathRequest(owner, owner.transform.position, endPos));
         }
         else
             lock (requestLock)
             {
-                pathRequests.Enqueue(new PathRequest(owner, startPos, endPos));
+                pathRequests.Enqueue(new PathRequest(owner, owner.transform.position, endPos));
             }
     }
 
@@ -184,5 +184,10 @@ public class Pathfinding : MonoBehaviour
         int dstY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
 
         return dstX == dstY ? 14 : 10;
+    }
+
+    public Grid NodeGrid
+    {
+        get { return grid; }
     }
 }

@@ -2139,6 +2139,11 @@ Prefab:
       propertyPath: m_Name
       value: Guard (3)
       objectReference: {fileID: 0}
+    - target: {fileID: 114315012166026756, guid: e00bfbd7ec58ea344b39fd5e451c5cb2,
+        type: 2}
+      propertyPath: searchTime
+      value: 3
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_ParentPrefab: {fileID: 100100000, guid: e00bfbd7ec58ea344b39fd5e451c5cb2, type: 2}
   m_IsPrefabParent: 0

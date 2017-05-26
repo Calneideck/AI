@@ -11,6 +11,7 @@ public class Bullet : MonoBehaviour
     IEnumerator Start()
     {
         yield return new WaitForSeconds(5);
+        GetComponent<TrailRenderer>().Clear();
         gameObject.SetActive(false);
     }
 

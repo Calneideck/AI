@@ -92,6 +92,7 @@ GameObject:
   - component: {fileID: 136351402080011710}
   - component: {fileID: 23148916767997052}
   - component: {fileID: 114315012166026756}
+  - component: {fileID: 114014001411553980}
   m_Layer: 0
   m_Name: Guard
   m_TagString: Untagged
@@ -263,6 +264,17 @@ Light:
   m_BounceIntensity: 1
   m_ShadowRadius: 0
   m_ShadowAngle: 0
+--- !u!114 &114014001411553980
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1886377659045876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9cff68a4f606ae044a71e9f6b0eabc5a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!114 &114315012166026756
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -274,10 +286,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 211f2a9ed1670f54183b2dcd2b568385, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  detection: 0
   speed: 1.4
+  searchTime: 3
+  reloadTime: 1.8
   minSightRange: 2.5
-  maxSightRange: 8
+  maxSightRange: 12
   shootCooldown: 0.9
   bulletPrefab: {fileID: 1602085146197590, guid: fb4b52195f084444189cb1f94b8912e5,
     type: 2}
