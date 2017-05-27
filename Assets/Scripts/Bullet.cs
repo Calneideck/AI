@@ -5,6 +5,8 @@ public class Bullet : MonoBehaviour
 {
     public float speed = 10;
     public LayerMask wallMask;
+    public LayerMask guardMask;
+    public LayerMask playerMask;
 
     private Vector3 dir;
 
@@ -24,10 +26,28 @@ public class Bullet : MonoBehaviour
 	{
         Vector3 velocity = dir * speed * Time.deltaTime;
 
-        RaycastHit wallHit;
-        if (Physics.Raycast(transform.position, velocity, out wallHit, velocity.magnitude + 0.05f, wallMask))
-            if (wallHit.collider != null)
+        RaycastHit hit;
+        if (Physics.Raycast(transform.position, velocity, out hit, velocity.magnitude, wallMask))
+            if (hit.collider != null)
             {
+                StopAllCoroutines();
+                GetComponent<TrailRenderer>().Clear();
+                gameObject.SetActive(false);
+            }
+
+        if (Physics.Raycast(transform.position, velocity, out hit, velocity.magnitude, guardMask))
+            if (hit.collider != null)
+            {
+                hit.collider.GetComponent<Guard>().Hit();
+                StopAllCoroutines();
+                GetComponent<TrailRenderer>().Clear();
+                gameObject.SetActive(false);
+            }
+
+        if (Physics.Raycast(transform.position, velocity, out hit, velocity.magnitude, playerMask))
+            if (hit.collider != null)
+            {
+                hit.collider.GetComponent<Player>().Hit();
                 StopAllCoroutines();
                 GetComponent<TrailRenderer>().Clear();
                 gameObject.SetActive(false);

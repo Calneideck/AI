@@ -20,6 +20,7 @@ public class Guard : MonoBehaviour
     private Vector3 lastPlayerSightPos;
     private Transform alertedGuard = null;
     private Vector3 investigateLocation = Vector3.zero;
+    private int health = 100;
 
     public float speed = 4;
     public float searchTime = 1;
@@ -28,7 +29,9 @@ public class Guard : MonoBehaviour
     public float maxSightRange = 8;
     public float shootCooldown = 0.9f;
     public GameObject bulletPrefab;
+    public Transform canvas;
     public Image detectionImage;
+    public RawImage healthImage;
     public Text stateText;
     public LayerMask wallMask;
 
@@ -46,7 +49,6 @@ public class Guard : MonoBehaviour
 
     void Update()
     {
-        print(state.ToString());
         switch (state)
         {
             case State.PATROLLING:
@@ -62,7 +64,7 @@ public class Guard : MonoBehaviour
                 break;
         }
         
-        detectionImage.transform.parent.rotation = Quaternion.Euler(Vector3.right * 90);
+        canvas.rotation = Quaternion.Euler(Vector3.right * 90);
     }
 
     void Detect()
@@ -99,12 +101,6 @@ public class Guard : MonoBehaviour
                                 break;
                             }
                     }
-
-            if (state == State.PATROLLING)
-            {
-                // Listen for gunshots
-
-            }
         }
 
         detectionImage.fillAmount = detection;
@@ -133,7 +129,6 @@ public class Guard : MonoBehaviour
 
     public void OnFollowPath()
     {
-        print(true);
         Pathfinding.instance.RequestPath(gameObject);
     }
 
@@ -280,6 +275,11 @@ public class Guard : MonoBehaviour
             investigateLocation = position;
             ChangeState(State.SEEKING);
         }
+        else if (state == State.SEEKING)
+        {
+            investigateLocation = position;
+            Pathfinding.instance.RequestPath(gameObject, position);
+        }
     }
 
     private void OnDrawGizmos()
@@ -319,10 +319,23 @@ public class Guard : MonoBehaviour
         stateText.text = state.ToString();
     }
 
-    void Dead()
+    public void Hit()
     {
-        allGuards.Remove(this);
-        GameObject.Destroy(gameObject);
+        if (health <= 0)
+            return;
+
+        health -= 15;
+        if (state == State.PATROLLING)
+            health = 0;
+
+        if (health <= 0)
+        {
+            allGuards.Remove(this);
+            GameObject.Destroy(gameObject);
+            health = 0;
+        }
+        else
+            healthImage.rectTransform.sizeDelta = new Vector2(3 * health / 100f, 0.4f);
     }
 
     public void OnSearch()

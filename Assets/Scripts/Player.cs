@@ -1,4 +1,5 @@
 ﻿using UnityEngine;
+using UnityEngine.UI;
 using System.Collections;
 using System;
 
@@ -6,39 +7,71 @@ public class Player : MonoBehaviour
 {
     public float speed = 2;
     public LayerMask wallMask;
-    public GameObject bulletPrefab;
-    public float shootCooldown = 0.1f;
-    public AudioSource gunSound;
+    public Text healthText;
+    public Text gunText;
+
+    [Header("Pistol")]
+    public GameObject pistolBulletPrefab;
+    public float pistolCooldown = 1.2f;
+    public AudioSource pistolSound;
+    public GameObject pistolObj;
+
+    [Header("Laser")]
+    public GameObject laserBulletPrefab;
+    public float laserCooldown = 0.1f;
+    public AudioSource laserSound;
+    public GameObject laserObj;
     public float gunShotSoundRange = 10;
 
     private bool alive = true;
     private float lastShootTime;
+    private bool usingLaser;
+    private int health = 100;
 
     void Start()
     {
-        ObjectPooler.instance.Setup(bulletPrefab, 20);
+        ObjectPooler.instance.Setup(laserBulletPrefab, 20);
+        ObjectPooler.instance.Setup(pistolBulletPrefab, 2);
         gunShotSoundRange *= gunShotSoundRange;
 	}
 
 	void Update()
 	{
         Move();
+        if (Input.GetKeyDown(KeyCode.Space))
+        {
+            usingLaser = !usingLaser;
+            if (usingLaser)
+            {
+                laserObj.SetActive(true);
+                pistolObj.SetActive(false);
+            }
+            else
+            {
+                laserObj.SetActive(false);
+                pistolObj.SetActive(true);
+            }
+            gunText.text = usingLaser ? "Laser" : "Pistol";
+        }
+
         Shoot();
 	}
 
     void Shoot()
     {
-        if (Input.GetButton("Fire1") && Time.time - lastShootTime >= shootCooldown)
+        if (Input.GetButton("Fire1") && Time.time - lastShootTime >= (usingLaser ? laserCooldown : pistolCooldown))
         {
-            GameObject bullet = ObjectPooler.instance.GetObject(bulletPrefab);
+            GameObject bullet = ObjectPooler.instance.GetObject(usingLaser ? laserBulletPrefab : pistolBulletPrefab);
             bullet.transform.position = transform.position + transform.forward * 0.4f;
             bullet.GetComponent<Bullet>().Setup(transform.forward);
             lastShootTime = Time.time;
-            gunSound.Play();
 
-            foreach (Guard guard in Guard.allGuards)
-                if ((guard.transform.position - transform.position).sqrMagnitude < gunShotSoundRange)
-                    guard.HeardGunshot(transform.position);
+            (usingLaser ? laserSound : pistolSound).Play();
+
+            if (usingLaser)
+                foreach (Guard guard in Guard.allGuards)
+                    if ((guard.transform.position - transform.position).sqrMagnitude < gunShotSoundRange)
+                        guard.HeardGunshot(transform.position);
         }
     }
 
@@ -69,6 +102,27 @@ public class Player : MonoBehaviour
             return hitPoint;
         }
         return Vector3.zero;
+    }
+
+    void OnDrawGizmos()
+    {
+        if (DebugHelper.gunSoundRange)
+        {
+            Gizmos.color = Color.cyan;
+            Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? Mathf.Sqrt(gunShotSoundRange) : gunShotSoundRange);
+        }
+    }
+
+    public void Hit()
+    {
+        if (health <= 0)
+            return;
+
+        health -= 20;
+        if (health <= 0)
+            GameObject.Destroy(gameObject);
+
+        healthText.text = "Health: " + health.ToString();
     }
 
     public bool Alive

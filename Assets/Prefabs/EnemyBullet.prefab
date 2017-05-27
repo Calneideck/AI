@@ -207,6 +207,12 @@ MonoBehaviour:
   wallMask:
     serializedVersion: 2
     m_Bits: 256
+  guardMask:
+    serializedVersion: 2
+    m_Bits: 0
+  playerMask:
+    serializedVersion: 2
+    m_Bits: 1024
 --- !u!136 &136385014529114700
 CapsuleCollider:
   m_ObjectHideFlags: 1
