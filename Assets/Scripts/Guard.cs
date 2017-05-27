@@ -17,6 +17,9 @@ public class Guard : MonoBehaviour
     private float detection = 0;
     private float startTaskTime;
     private float startRotation;
+    private Vector3 lastPlayerSightPos;
+    private Transform alertedGuard = null;
+    private Vector3 investigateLocation = Vector3.zero;
 
     public float speed = 4;
     public float searchTime = 1;
@@ -26,7 +29,10 @@ public class Guard : MonoBehaviour
     public float shootCooldown = 0.9f;
     public GameObject bulletPrefab;
     public Image detectionImage;
+    public Text stateText;
     public LayerMask wallMask;
+
+    public static List<Guard> allGuards = new List<Guard>();
 
     void Start()
     {
@@ -35,29 +41,31 @@ public class Guard : MonoBehaviour
         player = GameObject.Find("Player").GetComponent<Player>();
         minSightRange *= minSightRange;
         maxSightRange *= maxSightRange;
+        allGuards.Add(this);
     }
 
     void Update()
     {
+        print(state.ToString());
         switch (state)
         {
             case State.PATROLLING:
                 bTree.Patrol.Update();
-                DetectPlayer();
+                Detect();
                 break;
             case State.SEEKING:
-                
+                bTree.Seek.Update();
+                Detect();
                 break;
             case State.ENGAGING:
-                if (bTree.Engage.Update() == BNode.ResultState.SUCCESS)
-                    state = State.PATROLLING;
+                bTree.Engage.Update();
                 break;
         }
         
         detectionImage.transform.parent.rotation = Quaternion.Euler(Vector3.right * 90);
     }
 
-    void DetectPlayer()
+    void Detect()
     {
         if (CanSeePlayer)
         {
@@ -75,7 +83,28 @@ public class Guard : MonoBehaviour
         if (detection >= 1)
         {
             Pathfinding.instance.RequestPath(gameObject, player.transform.position);
-            state = State.ENGAGING;
+            ChangeState(State.ENGAGING);
+        }
+        else if (state == State.PATROLLING)
+        {
+            foreach (Guard guard in allGuards)
+                if (Vector3.Angle(guard.transform.position - transform.position, transform.forward) < 60)
+                    if ((guard.transform.position - transform.position).sqrMagnitude < maxSightRange)
+                    {
+                        if (!Physics.Raycast(transform.position, player.transform.position - transform.position, Vector3.Distance(transform.position, player.transform.position), wallMask))
+                            if (guard.GuardState == State.ENGAGING || guard.GuardState == State.SEEKING)
+                            {
+                                ChangeState(State.SEEKING);
+                                alertedGuard = guard.transform;
+                                break;
+                            }
+                    }
+
+            if (state == State.PATROLLING)
+            {
+                // Listen for gunshots
+
+            }
         }
 
         detectionImage.fillAmount = detection;
@@ -104,6 +133,7 @@ public class Guard : MonoBehaviour
 
     public void OnFollowPath()
     {
+        print(true);
         Pathfinding.instance.RequestPath(gameObject);
     }
 
@@ -118,9 +148,47 @@ public class Guard : MonoBehaviour
     }
     #endregion
 
+    #region SEEK
+    public BNode.ResultState Follow()
+    {
+        if (alertedGuard == null)
+            return BNode.ResultState.FAILURE;
+
+        if (path != null && pathIndex < path.Length)
+        {
+            Vector3 target = path[pathIndex];
+            target.y = 0.3f;
+            transform.Translate((target - transform.position).normalized * speed * Time.deltaTime, Space.World);
+            transform.LookAt(target);
+
+            if (Vector3.Distance(transform.position, target) < 0.2f)
+            {
+                pathIndex++;
+                if (pathIndex == path.Length)
+                    Pathfinding.instance.RequestPath(gameObject, alertedGuard.position);
+            }
+        }
+
+        return BNode.ResultState.RUNNING;
+    }
+
+    public void OnFollow()
+    {
+        if (alertedGuard != null)
+            Pathfinding.instance.RequestPath(gameObject, alertedGuard.transform.position);
+    }
+
+    public void OnCheckLocation()
+    {
+        if (investigateLocation != Vector3.zero)
+            Pathfinding.instance.RequestPath(gameObject, investigateLocation);
+    }
+    #endregion
+
     #region ENGAGE
     public BNode.ResultState Pursue()
     {
+        // fire at player
         if (Time.time - lastShootTime >= shootCooldown && CanSeePlayer)
         {
             GameObject bullet = ObjectPooler.instance.GetObject(bulletPrefab);
@@ -136,10 +204,13 @@ public class Guard : MonoBehaviour
         if (pathIndex < path.Length)
         {
             Vector3 moveTarget = path[pathIndex];
-            // Move at 80% speed while pursuing
-            transform.Translate((moveTarget - transform.position).normalized * speed * 0.8f * Time.deltaTime, Space.World);
+            // Move at 60% speed while pursuing
+            transform.Translate((moveTarget - transform.position).normalized * speed * 0.6f * Time.deltaTime, Space.World);
             if (CanSeePlayer)
+            {
+                lastPlayerSightPos = player.transform.position;
                 transform.LookAt(player.transform);
+            }
             else
                 transform.LookAt(moveTarget);
 
@@ -156,28 +227,26 @@ public class Guard : MonoBehaviour
 
     public void OnPursue()
     {
-        Pathfinding.instance.RequestPath(gameObject, player.transform.position);
+        if (CanSeePlayer)
+            Pathfinding.instance.RequestPath(gameObject, player.transform.position);
+        else
+            Pathfinding.instance.RequestPath(gameObject, lastPlayerSightPos);
     }
 
     public BNode.ResultState SeekCover()
     {
-        return BNode.ResultState.RUNNING;
+        BNode.ResultState result = FollowPath();
+        if (result == BNode.ResultState.RUNNING)
+            if (Physics.Raycast(transform.position, player.transform.position - transform.position, Vector3.Distance(transform.position, player.transform.position), wallMask))
+                result = BNode.ResultState.SUCCESS;
+
+        return result;
     }
 
     public void OnSeekCover()
     {
-        while (true)
-        {
-            Vector3 coverPos = Random.insideUnitCircle * 4;
-            coverPos = transform.position + (transform.position - player.transform.position).normalized * 3 + coverPos;
-
-            if (Physics.Raycast(coverPos, player.transform.position - coverPos, Vector3.Distance(coverPos, player.transform.position), wallMask))
-                if (Pathfinding.instance.NodeGrid.NodeFromWorldPoint(coverPos).Walkable)
-                {
-                    Pathfinding.instance.RequestPath(gameObject, coverPos);
-                    break;
-                }
-        }
+        Vector3 coverPos = Pathfinding.instance.GetHidingPos(gameObject, player.gameObject, wallMask);
+        Pathfinding.instance.RequestPath(gameObject, coverPos);
     }
 
     public BNode.ResultState Reload()
@@ -185,13 +254,13 @@ public class Guard : MonoBehaviour
         if (Time.time - startTaskTime >= reloadTime)
         {
             ammo = 5;
-            // Must return failure in order to go back to pursuing
-            return BNode.ResultState.FAILURE;
+            return BNode.ResultState.SUCCESS;
         }
 
         return BNode.ResultState.RUNNING;
     }
     #endregion
+
 
     public void PathReceived(Vector3[] path)
     {
@@ -201,6 +270,15 @@ public class Guard : MonoBehaviour
         {
             this.path = path;
             pathIndex = 0;
+        }
+    }
+
+    public void HeardGunshot(Vector3 position)
+    {
+        if (state == State.PATROLLING)
+        {
+            investigateLocation = position;
+            ChangeState(State.SEEKING);
         }
     }
 
@@ -219,6 +297,32 @@ public class Guard : MonoBehaviour
             Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? Mathf.Sqrt(minSightRange) : minSightRange);
             Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? Mathf.Sqrt(maxSightRange) : maxSightRange);
         }
+    }
+
+    void ChangeState(State state)
+    {
+        this.state = state;
+        switch (state)
+        {
+            case State.PATROLLING:
+                bTree.Patrol.Reset();
+                alertedGuard = null;
+                break;
+            case State.SEEKING:
+                bTree.Seek.Reset();
+                break;
+            case State.ENGAGING:
+                bTree.Engage.Reset();
+                alertedGuard = null;
+                break;
+        }
+        stateText.text = state.ToString();
+    }
+
+    void Dead()
+    {
+        allGuards.Remove(this);
+        GameObject.Destroy(gameObject);
     }
 
     public void OnSearch()

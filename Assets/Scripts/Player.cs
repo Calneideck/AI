@@ -8,12 +8,16 @@ public class Player : MonoBehaviour
     public LayerMask wallMask;
     public GameObject bulletPrefab;
     public float shootCooldown = 0.1f;
+    public AudioSource gunSound;
+    public float gunShotSoundRange = 10;
 
+    private bool alive = true;
     private float lastShootTime;
 
     void Start()
     {
         ObjectPooler.instance.Setup(bulletPrefab, 20);
+        gunShotSoundRange *= gunShotSoundRange;
 	}
 
 	void Update()
@@ -30,6 +34,11 @@ public class Player : MonoBehaviour
             bullet.transform.position = transform.position + transform.forward * 0.4f;
             bullet.GetComponent<Bullet>().Setup(transform.forward);
             lastShootTime = Time.time;
+            gunSound.Play();
+
+            foreach (Guard guard in Guard.allGuards)
+                if ((guard.transform.position - transform.position).sqrMagnitude < gunShotSoundRange)
+                    guard.HeardGunshot(transform.position);
         }
     }
 
@@ -60,5 +69,10 @@ public class Player : MonoBehaviour
             return hitPoint;
         }
         return Vector3.zero;
+    }
+
+    public bool Alive
+    {
+        get { return alive; }
     }
 }

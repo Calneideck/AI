@@ -164,6 +164,48 @@ public class Pathfinding : MonoBehaviour
         return new Vector3[0];
     }
 
+    /// <summary>
+    /// Find the closest node to the hider that is out of the seeker's LOS
+    /// </summary>
+    public Vector3 GetHidingPos(GameObject hider, GameObject seeker, LayerMask wallMask)
+    {
+        Node startNode = grid.NodeFromWorldPoint(hider.transform.position);
+        Heap<Node> openSet = new Heap<Node>((int)Mathf.Ceil(grid.gridSizeX * grid.gridSizeY * 0.5f));
+        HashSet<Node> closedSet = new HashSet<Node>();
+        openSet.Add(startNode);
+        int count = 0;
+
+        while (openSet.Count > 0)
+        {
+            Node currentNode = openSet.RemoveFirst();
+            closedSet.Add(currentNode);
+
+            if (Physics.Raycast(currentNode.worldPosition, seeker.transform.position - currentNode.worldPosition, Vector3.Distance(currentNode.worldPosition, seeker.transform.position), wallMask))
+                if (++count == 2)
+                    return currentNode.worldPosition;
+
+            foreach (Node neighbour in grid.GetNeighbours(currentNode))
+            {
+                if (!neighbour.Walkable || closedSet.Contains(neighbour))
+                    continue;
+
+                int newMovementCostToNeighbour = currentNode.gCost + GetDistance(currentNode, neighbour);
+                if (newMovementCostToNeighbour < neighbour.gCost || !openSet.Contains(neighbour))
+                {
+                    neighbour.gCost = newMovementCostToNeighbour;
+                    neighbour.hCost = 0;
+
+                    if (!openSet.Contains(neighbour))
+                        openSet.Add(neighbour);
+                    else
+                        openSet.UpdateItem(neighbour);
+                }
+            }
+        }
+
+        return Vector3.zero;
+    }
+
     List<Vector3> RetracePath(Node startNode, Node endNode)
     {
         List<Vector3> path = new List<Vector3>();
@@ -183,7 +225,9 @@ public class Pathfinding : MonoBehaviour
         int dstX = Mathf.Abs(nodeA.gridX - nodeB.gridX);
         int dstY = Mathf.Abs(nodeA.gridY - nodeB.gridY);
 
-        return dstX == dstY ? 14 : 10;
+        if (dstX > dstY)
+            return 14 * dstY + 10 * (dstX - dstY);
+        return 14 * dstX + 10 * (dstY - dstX);
     }
 
     public Grid NodeGrid

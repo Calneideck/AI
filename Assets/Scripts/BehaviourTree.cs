@@ -6,20 +6,27 @@ public class BehaviourTree : MonoBehaviour
     private BSequence patrolNode = new BSequence();
     private BSequence seekNode = new BSequence();
     private BSelector engageNode = new BSelector();
-
     private Guard guard;
+
+    public BLeaf lastRun = null;
 
     private void Start()
     {
         guard = GetComponent<Guard>();
-        patrolNode.Nodes.Add(new BLeaf(guard.FollowPath, guard.OnFollowPath));
-        patrolNode.Nodes.Add(new BLeaf(guard.Search, guard.OnSearch));
+        patrolNode.Nodes.Add(new BLeaf(this, guard.FollowPath, guard.OnFollowPath));
+        patrolNode.Nodes.Add(new BLeaf(this, guard.Search, guard.OnSearch));
+
+        BSelector investigate = new BSelector();
+        investigate.Nodes.Add(new BLeaf(this, guard.Follow, guard.OnFollow));
+        investigate.Nodes.Add(new BLeaf(this, guard.FollowPath, guard.OnCheckLocation));
+        seekNode.Nodes.Add(investigate);
+        seekNode.Nodes.Add(new BLeaf(this, guard.Search, guard.OnSearch));
 
         BSelector attack = new BSelector();
-        attack.Nodes.Add(new BLeaf(guard.Pursue, guard.OnPursue));
+        attack.Nodes.Add(new BLeaf(this, guard.Pursue, guard.OnPursue));
         BSequence outOfAmmo = new BSequence();
-        outOfAmmo.Nodes.Add(new BLeaf(guard.FollowPath, guard.OnSeekCover));
-        outOfAmmo.Nodes.Add(new BLeaf(guard.Reload, guard.OnSearch));
+        outOfAmmo.Nodes.Add(new BLeaf(this, guard.SeekCover, guard.OnSeekCover));
+        outOfAmmo.Nodes.Add(new BLeaf(this, guard.Reload, guard.OnSearch));
         attack.Nodes.Add(outOfAmmo);
         engageNode.Nodes.Add(attack);
     }
@@ -52,6 +59,13 @@ public abstract class BNode
 
     public abstract ResultState Update();
 
+    public void Reset()
+    {
+        currentNode = 0;
+        foreach (BNode child in nodes)
+            child.Reset();
+    }
+
     public List<BNode> Nodes
     {
         get { return nodes; }
@@ -63,6 +77,9 @@ public class BSequence : BNode
     public override ResultState Update()
     {
         ResultState result = nodes[currentNode].Update();
+        if (result == ResultState.FAILURE)
+            currentNode = 0;
+
         if (result == ResultState.SUCCESS)
         {
             currentNode++;
@@ -73,7 +90,6 @@ public class BSequence : BNode
             }
             else
                 return ResultState.RUNNING;
-            //return currentNode == nodes.Count ? ResultState.SUCCESS : ResultState.RUNNING;
         }
         else
             return result;
@@ -85,6 +101,9 @@ public class BSelector : BNode
     public override ResultState Update()
     {
         ResultState result = nodes[currentNode].Update();
+        if (result == ResultState.SUCCESS)
+            currentNode = 0;
+
         if (result == ResultState.FAILURE)
         {
             currentNode++;
@@ -95,7 +114,6 @@ public class BSelector : BNode
             }
             else
                 return ResultState.RUNNING;
-            //return currentNode == nodes.Count ? ResultState.FAILURE : ResultState.RUNNING;
         }
         else
             return result;
@@ -109,19 +127,21 @@ public class BLeaf : BNode
     public RunMethod runMethod;
     public OnTransitionMethod onTransition;
 
-    private static BLeaf lastRun = null;
+    private BehaviourTree ownerTree;
 
-    public BLeaf(RunMethod runMethod, OnTransitionMethod onTransition = null)
+    public BLeaf(BehaviourTree ownerTree, RunMethod runMethod, OnTransitionMethod onTransition = null)
     {
+        this.ownerTree = ownerTree;
         this.runMethod = runMethod;
         this.onTransition = onTransition;
     }
 
     public override ResultState Update()
     {
-        if (lastRun == null || lastRun != this)
+        // Run a method when transitioning to a new Leaf Node
+        if (ownerTree.lastRun == null || ownerTree.lastRun != this)
         {
-            lastRun = this;
+            ownerTree.lastRun = this;
             if (onTransition != null)
                 onTransition();
         }
