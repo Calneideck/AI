@@ -3,7 +3,7 @@ using UnityEngine.UI;
 using System.Collections;
 using System.Collections.Generic;
 
-public class Guard : MonoBehaviour
+public class Guard : MonoBehaviour, IPather
 {
     public enum State { PATROLLING, SEEKING, ENGAGING };
     private State state = State.PATROLLING;
@@ -11,8 +11,6 @@ public class Guard : MonoBehaviour
     private Vector3[] path;
     private int pathIndex;
     private Player player;
-    private float lastShootTime;
-    private int ammo = 5;
     private BehaviourTree bTree;
     private float detection = 0;
     private float startTaskTime;
@@ -23,11 +21,8 @@ public class Guard : MonoBehaviour
     private int health = 100;
 
     public float speed = 4;
-    public float searchTime = 1;
-    public float reloadTime = 1.8f;
     public float minSightRange = 2.5f;
     public float maxSightRange = 8;
-    public float shootCooldown = 0.9f;
     public GameObject bulletPrefab;
     public Transform canvas;
     public Image detectionImage;
@@ -94,7 +89,7 @@ public class Guard : MonoBehaviour
                     if ((guard.transform.position - transform.position).sqrMagnitude < maxSightRange)
                     {
                         if (!Physics.Raycast(transform.position, player.transform.position - transform.position, Vector3.Distance(transform.position, player.transform.position), wallMask))
-                            if (guard.GuardState == State.ENGAGING || guard.GuardState == State.SEEKING)
+                            if (guard.GuardState != State.PATROLLING)
                             {
                                 ChangeState(State.SEEKING);
                                 alertedGuard = guard.transform;
@@ -105,157 +100,6 @@ public class Guard : MonoBehaviour
 
         detectionImage.fillAmount = detection;
     }
-
-    #region PATROL
-    public BNode.ResultState FollowPath()
-    {
-        if (path != null && pathIndex < path.Length)
-        {
-            Vector3 target = path[pathIndex];
-            target.y = 0.3f;
-            transform.Translate((target - transform.position).normalized * speed * Time.deltaTime, Space.World);
-            transform.LookAt(target);
-
-            if (Vector3.Distance(transform.position, target) < 0.2f)
-            {
-                pathIndex++;
-                if (pathIndex == path.Length)
-                    return BNode.ResultState.SUCCESS;
-            }
-        }
-
-        return BNode.ResultState.RUNNING;
-    }
-
-    public void OnFollowPath()
-    {
-        Pathfinding.instance.RequestPath(gameObject);
-    }
-
-    public BNode.ResultState Search()
-    {
-        float pct = Mathf.Clamp01((Time.time - startTaskTime) / searchTime);
-        transform.rotation = Quaternion.Euler(0, startRotation + 360 * pct, 0);
-        if (pct == 1)
-            return BNode.ResultState.SUCCESS;
-
-        return BNode.ResultState.RUNNING;
-    }
-    #endregion
-
-    #region SEEK
-    public BNode.ResultState Follow()
-    {
-        if (alertedGuard == null)
-            return BNode.ResultState.FAILURE;
-
-        if (path != null && pathIndex < path.Length)
-        {
-            Vector3 target = path[pathIndex];
-            target.y = 0.3f;
-            transform.Translate((target - transform.position).normalized * speed * Time.deltaTime, Space.World);
-            transform.LookAt(target);
-
-            if (Vector3.Distance(transform.position, target) < 0.2f)
-            {
-                pathIndex++;
-                if (pathIndex == path.Length)
-                    Pathfinding.instance.RequestPath(gameObject, alertedGuard.position);
-            }
-        }
-
-        return BNode.ResultState.RUNNING;
-    }
-
-    public void OnFollow()
-    {
-        if (alertedGuard != null)
-            Pathfinding.instance.RequestPath(gameObject, alertedGuard.transform.position);
-    }
-
-    public void OnCheckLocation()
-    {
-        if (investigateLocation != Vector3.zero)
-            Pathfinding.instance.RequestPath(gameObject, investigateLocation);
-    }
-    #endregion
-
-    #region ENGAGE
-    public BNode.ResultState Pursue()
-    {
-        // fire at player
-        if (Time.time - lastShootTime >= shootCooldown && CanSeePlayer)
-        {
-            GameObject bullet = ObjectPooler.instance.GetObject(bulletPrefab);
-            bullet.transform.position = transform.position + transform.forward * 0.4f;
-            Vector3 shootTarget = player.transform.position - transform.position;
-            shootTarget.y = 0;
-            bullet.GetComponent<Bullet>().Setup(shootTarget);
-            lastShootTime = Time.time;
-            if (--ammo == 0)
-                return BNode.ResultState.FAILURE;
-        }
-
-        if (pathIndex < path.Length)
-        {
-            Vector3 moveTarget = path[pathIndex];
-            // Move at 60% speed while pursuing
-            transform.Translate((moveTarget - transform.position).normalized * speed * 0.6f * Time.deltaTime, Space.World);
-            if (CanSeePlayer)
-            {
-                lastPlayerSightPos = player.transform.position;
-                transform.LookAt(player.transform);
-            }
-            else
-                transform.LookAt(moveTarget);
-
-            if ((moveTarget - transform.position).sqrMagnitude < 0.04f)
-            {
-                pathIndex++;
-                if (pathIndex == path.Length)
-                    Pathfinding.instance.RequestPath(gameObject, player.transform.position);
-            }
-        }
-
-        return BNode.ResultState.RUNNING;
-    }
-
-    public void OnPursue()
-    {
-        if (CanSeePlayer)
-            Pathfinding.instance.RequestPath(gameObject, player.transform.position);
-        else
-            Pathfinding.instance.RequestPath(gameObject, lastPlayerSightPos);
-    }
-
-    public BNode.ResultState SeekCover()
-    {
-        BNode.ResultState result = FollowPath();
-        if (result == BNode.ResultState.RUNNING)
-            if (Physics.Raycast(transform.position, player.transform.position - transform.position, Vector3.Distance(transform.position, player.transform.position), wallMask))
-                result = BNode.ResultState.SUCCESS;
-
-        return result;
-    }
-
-    public void OnSeekCover()
-    {
-        Vector3 coverPos = Pathfinding.instance.GetHidingPos(gameObject, player.gameObject, wallMask);
-        Pathfinding.instance.RequestPath(gameObject, coverPos);
-    }
-
-    public BNode.ResultState Reload()
-    {
-        if (Time.time - startTaskTime >= reloadTime)
-        {
-            ammo = 5;
-            return BNode.ResultState.SUCCESS;
-        }
-
-        return BNode.ResultState.RUNNING;
-    }
-    #endregion
-
 
     public void PathReceived(Vector3[] path)
     {
@@ -344,7 +188,7 @@ public class Guard : MonoBehaviour
         startTaskTime = Time.time;
     }
 
-    bool CanSeePlayer
+    public bool CanSeePlayer
     {
         get { return !Physics.Raycast(transform.position, player.transform.position - transform.position, Vector3.Distance(transform.position, player.transform.position), wallMask); }
     }
@@ -352,5 +196,36 @@ public class Guard : MonoBehaviour
     public State GuardState
     {
         get { return state; }
+    }
+
+    public float StartTaskTime
+    {
+        get { return startTaskTime; }
+    }
+
+    public Vector3[] Path
+    {
+        get { return path; }
+    }
+
+    public int PathIndex
+    {
+        get { return pathIndex; }
+        set { pathIndex = value; }
+    }
+
+    public Vector3 InvestigateLocation
+    {
+        get { return investigateLocation; }
+    }
+
+    public Transform AlertedGuard
+    {
+        get { return alertedGuard; }
+    }
+
+    public float StartRotation
+    {
+        get { return startRotation; }
     }
 }

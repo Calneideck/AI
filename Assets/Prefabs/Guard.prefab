@@ -72,6 +72,7 @@ GameObject:
   - component: {fileID: 33909496965645368}
   - component: {fileID: 65064221275300900}
   - component: {fileID: 23530667710630676}
+  - component: {fileID: 82777877481838606}
   m_Layer: 0
   m_Name: Gun
   m_TagString: Untagged
@@ -144,6 +145,9 @@ GameObject:
   - component: {fileID: 23148916767997052}
   - component: {fileID: 114315012166026756}
   - component: {fileID: 114014001411553980}
+  - component: {fileID: 114456465870415258}
+  - component: {fileID: 114841514551033490}
+  - component: {fileID: 114387248269326540}
   m_Layer: 9
   m_Name: Guard
   m_TagString: Untagged
@@ -281,6 +285,86 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!82 &82777877481838606
+AudioSource:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1488105947431450}
+  m_Enabled: 1
+  serializedVersion: 4
+  OutputAudioMixerGroup: {fileID: 0}
+  m_audioClip: {fileID: 8300000, guid: a57f4d022daa6ee4bb8d05907175fa41, type: 3}
+  m_PlayOnAwake: 0
+  m_Volume: 1
+  m_Pitch: 1
+  Loop: 0
+  Mute: 0
+  Spatialize: 0
+  SpatializePostEffects: 0
+  Priority: 128
+  DopplerLevel: 1
+  MinDistance: 1
+  MaxDistance: 500
+  Pan2D: 0
+  rolloffMode: 0
+  BypassEffects: 0
+  BypassListenerEffects: 0
+  BypassReverbZones: 0
+  rolloffCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    - serializedVersion: 2
+      time: 1
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
+  panLevelCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  spreadCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 0
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
+  reverbZoneMixCustomCurve:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 2
+      time: 0
+      value: 1
+      inSlope: 0
+      outSlope: 0
+      tangentMode: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 0
 --- !u!108 &108353430808937550
 Light:
   m_ObjectHideFlags: 1
@@ -326,6 +410,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9cff68a4f606ae044a71e9f6b0eabc5a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  guard: {fileID: 114315012166026756}
+  patrol: {fileID: 114456465870415258}
+  seek: {fileID: 114841514551033490}
+  engage: {fileID: 114387248269326540}
 --- !u!114 &114315012166026756
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -338,11 +426,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   speed: 1.4
-  searchTime: 3
-  reloadTime: 1.8
   minSightRange: 2.5
   maxSightRange: 12
-  shootCooldown: 0.9
   bulletPrefab: {fileID: 1602085146197590, guid: fb4b52195f084444189cb1f94b8912e5,
     type: 2}
   canvas: {fileID: 224861446378132334}
@@ -352,6 +437,28 @@ MonoBehaviour:
   wallMask:
     serializedVersion: 2
     m_Bits: 256
+--- !u!114 &114387248269326540
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1886377659045876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ae6783f087b8abc44a6a44dfbc6457fc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  bulletPrefab: {fileID: 1602085146197590, guid: fb4b52195f084444189cb1f94b8912e5,
+    type: 2}
+  patrol: {fileID: 114456465870415258}
+  guard: {fileID: 114315012166026756}
+  reloadTime: 1.8
+  shootCooldown: 0.9
+  wallMask:
+    serializedVersion: 2
+    m_Bits: 256
+  audioSource: {fileID: 82777877481838606}
+  gunShotSoundRange: 10
 --- !u!114 &114432680720777878
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -368,6 +475,19 @@ MonoBehaviour:
   m_BlockingMask:
     serializedVersion: 2
     m_Bits: 4294967295
+--- !u!114 &114456465870415258
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1886377659045876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 352fafe92d2cb894699ab7e20b4d9b58, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  searchTime: 3
+  guard: {fileID: 114315012166026756}
 --- !u!114 &114608262759826196
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -454,6 +574,18 @@ MonoBehaviour:
   m_FillAmount: 0
   m_FillClockwise: 1
   m_FillOrigin: 2
+--- !u!114 &114841514551033490
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 100100000}
+  m_GameObject: {fileID: 1886377659045876}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8129493bc745106458cb1e48be8bd3c1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  guard: {fileID: 114315012166026756}
 --- !u!114 &114873993146787582
 MonoBehaviour:
   m_ObjectHideFlags: 1

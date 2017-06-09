@@ -58,7 +58,7 @@ public class Pathfinding : MonoBehaviour
             {
                 PathInfo pathInfo = pathsFound.Dequeue();
                 if (pathInfo.unit)
-                    pathInfo.unit.GetComponent<Guard>().PathReceived(pathInfo.path);
+                    pathInfo.unit.GetComponent<IPather>().PathReceived(pathInfo.path);
             }
         }
     }
@@ -181,7 +181,7 @@ public class Pathfinding : MonoBehaviour
             closedSet.Add(currentNode);
 
             if (Physics.Raycast(currentNode.worldPosition, seeker.transform.position - currentNode.worldPosition, Vector3.Distance(currentNode.worldPosition, seeker.transform.position), wallMask))
-                if (++count == 2)
+                if (++count == 5) // This aims the get a cover position that is slightly further away to compensate for the guard's dimensions
                     return currentNode.worldPosition;
 
             foreach (Node neighbour in grid.GetNeighbours(currentNode))

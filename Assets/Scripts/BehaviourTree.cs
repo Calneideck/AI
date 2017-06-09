@@ -6,27 +6,30 @@ public class BehaviourTree : MonoBehaviour
     private BSequence patrolNode = new BSequence();
     private BSequence seekNode = new BSequence();
     private BSelector engageNode = new BSelector();
-    private Guard guard;
+
+    public Guard guard;
+    public Patrol patrol;
+    public Seek seek;
+    public Engage engage;
 
     public BLeaf lastRun = null;
 
     private void Start()
     {
-        guard = GetComponent<Guard>();
-        patrolNode.Nodes.Add(new BLeaf(this, guard.FollowPath, guard.OnFollowPath));
-        patrolNode.Nodes.Add(new BLeaf(this, guard.Search, guard.OnSearch));
+        patrolNode.Nodes.Add(new BLeaf(this, patrol.FollowPath, patrol.OnFollowPath));
+        patrolNode.Nodes.Add(new BLeaf(this, patrol.Search, guard.OnSearch));
 
         BSelector investigate = new BSelector();
-        investigate.Nodes.Add(new BLeaf(this, guard.Follow, guard.OnFollow));
-        investigate.Nodes.Add(new BLeaf(this, guard.FollowPath, guard.OnCheckLocation));
+        investigate.Nodes.Add(new BLeaf(this, seek.Follow, seek.OnFollow));
+        investigate.Nodes.Add(new BLeaf(this, patrol.FollowPath, seek.OnCheckLocation));
         seekNode.Nodes.Add(investigate);
-        seekNode.Nodes.Add(new BLeaf(this, guard.Search, guard.OnSearch));
+        seekNode.Nodes.Add(new BLeaf(this, patrol.Search, guard.OnSearch));
 
         BSelector attack = new BSelector();
-        attack.Nodes.Add(new BLeaf(this, guard.Pursue, guard.OnPursue));
+        attack.Nodes.Add(new BLeaf(this, engage.Pursue, engage.OnPursue));
         BSequence outOfAmmo = new BSequence();
-        outOfAmmo.Nodes.Add(new BLeaf(this, guard.SeekCover, guard.OnSeekCover));
-        outOfAmmo.Nodes.Add(new BLeaf(this, guard.Reload, guard.OnSearch));
+        outOfAmmo.Nodes.Add(new BLeaf(this, engage.SeekCover, engage.OnSeekCover));
+        outOfAmmo.Nodes.Add(new BLeaf(this, engage.Reload, guard.OnSearch));
         attack.Nodes.Add(outOfAmmo);
         engageNode.Nodes.Add(attack);
     }
