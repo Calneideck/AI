@@ -170,10 +170,10 @@ public class Boid : MonoBehaviour, IPather
     {
         Vector3 force = Vector3.zero;
 
-        foreach (Quaternion rot in rotations)
+        foreach (Quaternion rotation in rotations)
         {
             RaycastHit wallHit;
-            if (Physics.Raycast(transform.position, rot * transform.forward, out wallHit, 0.5f, wallMask))
+            if (Physics.Raycast(transform.position, rotation * transform.forward, out wallHit, 0.5f, wallMask))
                 force += wallHit.normal * (0.5f - wallHit.distance) * BoidController.wallAvoidance;
         }
 

@@ -1671,12 +1671,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5e45505cf4fa2ba459065c6835605a82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _neighbourRange: 3
+  _neighbourRange: 2
   _maxSpeed: 1.5
   _wander: 1
-  _cohesion: 0.3
+  _cohesion: 1.3
   _alignment: 0.5
-  _separation: 4
+  _separation: 1
   _wallAvoidance: 1.5
   _wanderDist: 2.5
   _wanderRadius: 1
