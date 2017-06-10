@@ -36,7 +36,12 @@ public class Patrol : MonoBehaviour
         float pct = Mathf.Clamp01((Time.time - guard.StartTaskTime) / searchTime);
         transform.rotation = Quaternion.Euler(0, guard.StartRotation + 360 * pct, 0);
         if (pct == 1)
+        {
+            if (guard.GuardState == Guard.State.SEEKING)
+                guard.ChangeState(Guard.State.PATROLLING);
+
             return BNode.ResultState.SUCCESS;
+        }
 
         return BNode.ResultState.RUNNING;
     }

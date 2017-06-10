@@ -15,7 +15,7 @@ public class Boid : MonoBehaviour, IPather
         }
     }
 
-    private enum BoidState { FLOCKING, SEARCHING };
+    private enum BoidState { FLOCKING, SEARCHING, ENGAGING };
     private BoidState state = BoidState.FLOCKING;
 
     private Quaternion[] rotations = new Quaternion[] { Quaternion.identity, Quaternion.Euler(0, 30, 0), Quaternion.Euler(0, -30, 0), Quaternion.Euler(30, 0, 0), Quaternion.Euler(-30, 0, 0) };
@@ -26,43 +26,33 @@ public class Boid : MonoBehaviour, IPather
     private float awayTime;
     private Vector3[] path;
     private int pathIndex;
+    private Player player;
 
     public LayerMask wallMask;
     public float searchSpeed;
+    public float engageSpeed = 3;
 
     public static List<Boid> Boids = new List<Boid>();
-    public static Group LargestGroup = new Group(0, null); 
+    public static Group LargestGroup = new Group(0, null);
 
     void Start()
-	{
+    {
         Boids.Add(this);
-	}
+    }
 
-	void Update()
-	{
+    public void Setup(Player player)
+    {
+        this.player = player;
+    }
+
+    void Update()
+    {
         switch (state)
         {
             case BoidState.FLOCKING:
-                GetNeighbours();
-                if (neighbours.Count == 0)
-                {
-                    awayTime += Time.deltaTime;
-                    if (awayTime >= 2)
-                    {
-                        Pathfinding.instance.RequestPath(gameObject, LargestGroup.boid.transform.position);
-                        state = BoidState.SEARCHING;
-                        print(true);
-                    }
-                }
-                else
-                    awayTime = 0;
-
-
-                Vector3 accel = Force(); // Mass is irrelvant here
-                vel += accel;
-                vel = Vector3.ClampMagnitude(vel, BoidController.maxSpeed);
-                transform.LookAt(transform.position + vel);
-                transform.position += vel * Time.deltaTime;
+                Flocking();
+                if (CanSeePlayer)
+                    state = BoidState.ENGAGING;
                 break;
 
             case BoidState.SEARCHING:
@@ -71,6 +61,16 @@ public class Boid : MonoBehaviour, IPather
                     state = BoidState.FLOCKING;
                 else
                     FollowPath();
+
+                if (CanSeePlayer)
+                    state = BoidState.ENGAGING;
+                break;
+
+            case BoidState.ENGAGING:
+                if (CanSeePlayer)
+                    transform.Translate((player.transform.position - transform.position).normalized * Time.deltaTime * engageSpeed, Space.World);
+                else
+                    state = BoidState.FLOCKING;
                 break;
         }
 
@@ -78,7 +78,30 @@ public class Boid : MonoBehaviour, IPather
         Vector3 pos = transform.position;
         pos.y = Mathf.Clamp(pos.y, 0.08f, 0.72f);
         transform.position = pos;
-	}
+    }
+
+    void Flocking()
+    {
+        GetNeighbours();
+        if (neighbours.Count == 0)
+        {
+            awayTime += Time.deltaTime;
+            if (awayTime >= 2)
+            {
+                Pathfinding.instance.RequestPath(gameObject, LargestGroup.boid.transform.position);
+                state = BoidState.SEARCHING;
+            }
+        }
+        else
+            awayTime = 0;
+
+
+        Vector3 accel = Force(); // Mass is irrelvant here
+        vel += accel;
+        vel = Vector3.ClampMagnitude(vel, BoidController.maxSpeed);
+        transform.LookAt(transform.position + vel);
+        transform.position += vel * Time.deltaTime;
+    }
 
     Vector3 Force()
     {
@@ -86,7 +109,7 @@ public class Boid : MonoBehaviour, IPather
         force += Cohesion() * BoidController.cohesion;
         force += Alignment() * BoidController.alignment;
         force += Separation() * BoidController.separation;
-        force += WallAvoidance() * 10;
+        force += WallAvoidance() * BoidController.wallAvoidance;
         return force;
     }
 
@@ -174,7 +197,7 @@ public class Boid : MonoBehaviour, IPather
         {
             RaycastHit wallHit;
             if (Physics.Raycast(transform.position, rotation * transform.forward, out wallHit, 0.5f, wallMask))
-                force += wallHit.normal * (0.5f - wallHit.distance) * BoidController.wallAvoidance;
+                force += wallHit.normal * (0.5f - wallHit.distance);
         }
 
         return force;
@@ -182,6 +205,9 @@ public class Boid : MonoBehaviour, IPather
 
     void FollowPath()
     {
+        if (path == null)
+            return;
+
         if (pathIndex < path.Length)
         {
             Vector3 target = path[pathIndex];
@@ -198,6 +224,18 @@ public class Boid : MonoBehaviour, IPather
         }
     }
 
+    public void Dead()
+    {
+        Boids.Remove(this);
+        if (LargestGroup.boid == this)
+        {
+            LargestGroup.count = 0;
+            if (Boids.Count > 0)
+                LargestGroup.boid = Boids[0];
+        }
+        GameObject.Destroy(gameObject);
+    }
+
     public void PathReceived(Vector3[] path)
     {
         if (path.Length > 0)
@@ -210,5 +248,10 @@ public class Boid : MonoBehaviour, IPather
     public Vector3 Heading
     {
         get { return vel.normalized; }
+    }
+
+    bool CanSeePlayer
+    {
+        get { return !Physics.Raycast(transform.position, player.transform.position - transform.position, Vector3.Distance(transform.position, player.transform.position), wallMask); }
     }
 }

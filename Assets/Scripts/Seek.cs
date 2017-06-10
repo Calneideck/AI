@@ -21,7 +21,7 @@ public class Seek : MonoBehaviour
             {
                 guard.PathIndex++;
                 if (guard.PathIndex == guard.Path.Length)
-                    Pathfinding.instance.RequestPath(gameObject, guard.AlertedGuard.position);
+                    return BNode.ResultState.SUCCESS;
             }
         }
 

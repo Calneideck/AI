@@ -37,6 +37,9 @@ public class Player : MonoBehaviour
 
 	void Update()
 	{
+        if (Input.GetKeyDown(KeyCode.P))
+            Time.timeScale = 1 - Time.timeScale;
+
         Move();
         if (Input.GetKeyDown(KeyCode.Space))
         {
@@ -65,7 +68,6 @@ public class Player : MonoBehaviour
             bullet.transform.position = transform.position + transform.forward * 0.4f;
             bullet.GetComponent<Bullet>().Setup(transform.forward);
             lastShootTime = Time.time;
-
             (usingLaser ? laserSound : pistolSound).Play();
 
             if (usingLaser)
@@ -110,6 +112,22 @@ public class Player : MonoBehaviour
         {
             Gizmos.color = Color.cyan;
             Gizmos.DrawWireSphere(transform.position, Application.isPlaying ? Mathf.Sqrt(gunShotSoundRange) : gunShotSoundRange);
+        }
+    }
+
+    void OnTriggerEnter(Collider coll)
+    {
+        if (coll.tag == "Boid")
+        {
+            coll.GetComponent<Boid>().Dead();
+            if (health <= 0)
+                return;
+
+            health -= 2;
+            if (health <= 0)
+                GameObject.Destroy(gameObject);
+
+            healthText.text = "Health: " + health.ToString();
         }
     }
 

@@ -3,6 +3,7 @@ using System.Collections;
 
 public class BoidController : MonoBehaviour
 {
+    public Player player;
     [SerializeField]
     private float _neighbourRange = 4;
     [SerializeField]
@@ -43,6 +44,7 @@ public class BoidController : MonoBehaviour
     public int spawnAmount = 20;
     public float spawnRadius = 1.5f;
     public GameObject boidPrefab;
+    public Color[] colours;
 
     void Start()
     {
@@ -50,13 +52,16 @@ public class BoidController : MonoBehaviour
         {
             Vector3 pos = spawnPos.position + Random.insideUnitSphere * spawnRadius;
             pos.y = Random.Range(0.1f, 0.7f);
-            GameObject.Instantiate(boidPrefab, pos, Random.rotationUniform, transform);
+            GameObject boid = GameObject.Instantiate(boidPrefab, pos, Random.rotationUniform, transform);
+            boid.GetComponentInChildren<TrailRenderer>().startColor = colours[Random.Range(0, colours.Length)];
+            boid.GetComponentInChildren<TrailRenderer>().endColor = colours[Random.Range(0, colours.Length)];
+            boid.GetComponent<Boid>().Setup(player);
         }
     }
 
     private void OnDrawGizmos()
     {
-        Gizmos.DrawWireSphere(transform.position, neighbourRange);
+        Gizmos.DrawWireSphere(spawnPos.position, neighbourRange);
     }
 
     void OnValidate()

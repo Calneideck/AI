@@ -6,6 +6,7 @@ public class Bullet : MonoBehaviour
     public float speed = 10;
     public LayerMask wallMask;
     public LayerMask guardMask;
+    public LayerMask boidMask;
     public LayerMask playerMask;
 
     private Vector3 dir;
@@ -39,6 +40,15 @@ public class Bullet : MonoBehaviour
             if (hit.collider != null)
             {
                 hit.collider.GetComponent<Guard>().Hit();
+                StopAllCoroutines();
+                GetComponent<TrailRenderer>().Clear();
+                gameObject.SetActive(false);
+            }
+
+        if (Physics.Raycast(transform.position, velocity, out hit, velocity.magnitude, boidMask))
+            if (hit.collider != null)
+            {
+                hit.collider.GetComponent<Boid>().Dead();
                 StopAllCoroutines();
                 GetComponent<TrailRenderer>().Clear();
                 gameObject.SetActive(false);

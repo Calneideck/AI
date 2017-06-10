@@ -85,17 +85,18 @@ public class Guard : MonoBehaviour, IPather
         else if (state == State.PATROLLING)
         {
             foreach (Guard guard in allGuards)
-                if (Vector3.Angle(guard.transform.position - transform.position, transform.forward) < 60)
-                    if ((guard.transform.position - transform.position).sqrMagnitude < maxSightRange)
-                    {
-                        if (!Physics.Raycast(transform.position, player.transform.position - transform.position, Vector3.Distance(transform.position, player.transform.position), wallMask))
-                            if (guard.GuardState != State.PATROLLING)
-                            {
-                                ChangeState(State.SEEKING);
-                                alertedGuard = guard.transform;
-                                break;
-                            }
-                    }
+                if (guard != this)
+                    if (Vector3.Angle(guard.transform.position - transform.position, transform.forward) < 60)
+                        if ((guard.transform.position - transform.position).sqrMagnitude < maxSightRange)
+                        {
+                            if (!Physics.Raycast(transform.position, guard.transform.position - transform.position, Vector3.Distance(transform.position, guard.transform.position), wallMask))
+                                if (guard.GuardState != State.PATROLLING)
+                                {
+                                    ChangeState(State.SEEKING);
+                                    alertedGuard = guard.transform;
+                                    break;
+                                }
+                        }
         }
 
         detectionImage.fillAmount = detection;
@@ -143,7 +144,7 @@ public class Guard : MonoBehaviour, IPather
         }
     }
 
-    void ChangeState(State state)
+    public void ChangeState(State state)
     {
         this.state = state;
         switch (state)
@@ -151,6 +152,7 @@ public class Guard : MonoBehaviour, IPather
             case State.PATROLLING:
                 bTree.Patrol.Reset();
                 alertedGuard = null;
+                investigateLocation = Vector3.zero;
                 break;
             case State.SEEKING:
                 bTree.Seek.Reset();
@@ -158,6 +160,7 @@ public class Guard : MonoBehaviour, IPather
             case State.ENGAGING:
                 bTree.Engage.Reset();
                 alertedGuard = null;
+                investigateLocation = Vector3.zero;
                 break;
         }
         stateText.text = state.ToString();

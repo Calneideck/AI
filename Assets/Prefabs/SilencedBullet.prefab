@@ -210,6 +210,9 @@ MonoBehaviour:
   guardMask:
     serializedVersion: 2
     m_Bits: 512
+  boidMask:
+    serializedVersion: 2
+    m_Bits: 2048
   playerMask:
     serializedVersion: 2
     m_Bits: 0

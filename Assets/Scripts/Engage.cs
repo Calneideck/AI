@@ -7,6 +7,7 @@ public class Engage : MonoBehaviour
     private int ammo = 5;
     private Vector3 lastPlayerSightPos;
     private Player player;
+    private float engageTime;
 
     public GameObject bulletPrefab;
     public Patrol patrol;
@@ -50,9 +51,15 @@ public class Engage : MonoBehaviour
             {
                 lastPlayerSightPos = player.transform.position;
                 transform.LookAt(player.transform);
+                engageTime = 0;
             }
             else
+            {
                 transform.LookAt(moveTarget);
+                engageTime += Time.deltaTime;
+                if (engageTime >= 6)
+                    guard.ChangeState(Guard.State.PATROLLING);
+            }
 
             if ((moveTarget - transform.position).sqrMagnitude < 0.04f)
             {

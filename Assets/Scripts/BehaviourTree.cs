@@ -16,22 +16,20 @@ public class BehaviourTree : MonoBehaviour
 
     private void Start()
     {
-        patrolNode.Nodes.Add(new BLeaf(this, patrol.FollowPath, patrol.OnFollowPath));
-        patrolNode.Nodes.Add(new BLeaf(this, patrol.Search, guard.OnSearch));
+        patrolNode.Nodes.Add(new BLeaf(this, patrol.FollowPath, patrol.OnFollowPath, "Following Path"));
+        patrolNode.Nodes.Add(new BLeaf(this, patrol.Search, guard.OnSearch, "PATROL - searching"));
 
         BSelector investigate = new BSelector();
-        investigate.Nodes.Add(new BLeaf(this, seek.Follow, seek.OnFollow));
-        investigate.Nodes.Add(new BLeaf(this, patrol.FollowPath, seek.OnCheckLocation));
+        investigate.Nodes.Add(new BLeaf(this, seek.Follow, seek.OnFollow, "following"));
+        investigate.Nodes.Add(new BLeaf(this, patrol.FollowPath, seek.OnCheckLocation, "investigating"));
         seekNode.Nodes.Add(investigate);
-        seekNode.Nodes.Add(new BLeaf(this, patrol.Search, guard.OnSearch));
+        seekNode.Nodes.Add(new BLeaf(this, patrol.Search, guard.OnSearch, "SEEK - searching"));
 
-        BSelector attack = new BSelector();
-        attack.Nodes.Add(new BLeaf(this, engage.Pursue, engage.OnPursue));
+        engageNode.Nodes.Add(new BLeaf(this, engage.Pursue, engage.OnPursue));
         BSequence outOfAmmo = new BSequence();
         outOfAmmo.Nodes.Add(new BLeaf(this, engage.SeekCover, engage.OnSeekCover));
         outOfAmmo.Nodes.Add(new BLeaf(this, engage.Reload, guard.OnSearch));
-        attack.Nodes.Add(outOfAmmo);
-        engageNode.Nodes.Add(attack);
+        engageNode.Nodes.Add(outOfAmmo);
     }
 
     #region Getters
@@ -131,12 +129,14 @@ public class BLeaf : BNode
     public OnTransitionMethod onTransition;
 
     private BehaviourTree ownerTree;
+    private string msg;
 
-    public BLeaf(BehaviourTree ownerTree, RunMethod runMethod, OnTransitionMethod onTransition = null)
+    public BLeaf(BehaviourTree ownerTree, RunMethod runMethod, OnTransitionMethod onTransition = null, string msg = null)
     {
         this.ownerTree = ownerTree;
         this.runMethod = runMethod;
         this.onTransition = onTransition;
+        this.msg = msg;
     }
 
     public override ResultState Update()
@@ -145,6 +145,8 @@ public class BLeaf : BNode
         if (ownerTree.lastRun == null || ownerTree.lastRun != this)
         {
             ownerTree.lastRun = this;
+            //if (!string.IsNullOrEmpty(msg))
+            //    Debug.Log(msg);
             if (onTransition != null)
                 onTransition();
         }

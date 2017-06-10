@@ -268,9 +268,12 @@ MonoBehaviour:
   guardMask:
     serializedVersion: 2
     m_Bits: 512
+  boidMask:
+    serializedVersion: 2
+    m_Bits: 2048
   playerMask:
     serializedVersion: 2
-    m_Bits: 1024
+    m_Bits: 0
 --- !u!135 &135780765065070780
 SphereCollider:
   m_ObjectHideFlags: 1
