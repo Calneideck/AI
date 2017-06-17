@@ -35,7 +35,7 @@ public class Boid : MonoBehaviour, IPather
     public static List<Boid> Boids = new List<Boid>();
     public static Group LargestGroup = new Group(0, null);
 
-    void Start()
+    void Awake()
     {
         Boids.Add(this);
     }
@@ -88,7 +88,8 @@ public class Boid : MonoBehaviour, IPather
             awayTime += Time.deltaTime;
             if (awayTime >= 2)
             {
-                Pathfinding.instance.RequestPath(gameObject, LargestGroup.boid.transform.position);
+                if (Pathfinding.instance && LargestGroup.boid)
+                    Pathfinding.instance.RequestPath(gameObject, LargestGroup.boid.transform.position);
                 state = BoidState.SEARCHING;
             }
         }
@@ -118,8 +119,10 @@ public class Boid : MonoBehaviour, IPather
         neighbours.Clear();
         foreach (Boid boid in Boids)
             if (boid != this)
+            {
                 if ((boid.transform.position - transform.position).sqrMagnitude < Mathf.Pow(BoidController.neighbourRange, 2))
                     neighbours.Add(boid);
+            }
 
         if (LargestGroup.boid == this || neighbours.Count > LargestGroup.count)
         {

@@ -3,6 +3,19 @@ using System.Collections;
 
 public class BoidController : MonoBehaviour
 {
+    [System.Serializable()]
+    public struct Spawn
+    {
+        public Transform spawnPos;
+        public int amount;
+
+        public Spawn(Transform spawnPos, int amount)
+        {
+            this.spawnPos = spawnPos;
+            this.amount = amount;
+        }
+    }
+
     public Player player;
     [SerializeField]
     private float _neighbourRange = 4;
@@ -40,31 +53,41 @@ public class BoidController : MonoBehaviour
     public static float wanderJitter;
 
     [Header("Spawning")]
-    public Transform spawnPos;
-    public int spawnAmount = 20;
+    public Spawn[] spawns;
     public float spawnRadius = 1.5f;
     public GameObject boidPrefab;
     public Color[] colours;
 
     void Start()
     {
-        for (int i = 0; i < spawnAmount; i++)
-        {
-            Vector3 pos = spawnPos.position + Random.insideUnitSphere * spawnRadius;
-            pos.y = Random.Range(0.1f, 0.7f);
-            GameObject boid = GameObject.Instantiate(boidPrefab, pos, Random.rotationUniform, transform);
-            boid.GetComponentInChildren<TrailRenderer>().startColor = colours[Random.Range(0, colours.Length)];
-            boid.GetComponentInChildren<TrailRenderer>().endColor = colours[Random.Range(0, colours.Length)];
-            boid.GetComponent<Boid>().Setup(player);
-        }
-    }
-
-    private void OnDrawGizmos()
-    {
-        Gizmos.DrawWireSphere(spawnPos.position, neighbourRange);
+        foreach (Spawn spawn in spawns)
+            for (int i = 0; i < spawn.amount; i++)
+            {
+                Vector3 pos = spawn.spawnPos.position + Random.insideUnitSphere * spawnRadius;
+                pos.y = Random.Range(0.1f, 0.7f);
+                GameObject boid = GameObject.Instantiate(boidPrefab, pos, Random.rotationUniform, transform);
+                boid.GetComponentInChildren<TrailRenderer>().startColor = colours[Random.Range(0, colours.Length)];
+                boid.GetComponentInChildren<TrailRenderer>().endColor = colours[Random.Range(0, colours.Length)];
+                boid.GetComponent<Boid>().Setup(player);
+            }
     }
 
     void OnValidate()
+    {
+        neighbourRange = _neighbourRange;
+        maxSpeed = _maxSpeed;
+        wander = _wander;
+        cohesion = _cohesion;
+        alignment = _alignment;
+        separation = _separation;
+        wallAvoidance = _wallAvoidance;
+
+        wanderDist = _wanderDist;
+        wanderRadius = _wanderRadius;
+        wanderJitter = _wanderJitter;
+    }
+
+    void Awake()
     {
         neighbourRange = _neighbourRange;
         maxSpeed = _maxSpeed;
