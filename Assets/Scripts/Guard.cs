@@ -34,6 +34,7 @@ public class Guard : MonoBehaviour, IPather
 
     void Start()
     {
+        allGuards.Clear();
         bTree = GetComponent<BehaviourTree>();
         ObjectPooler.instance.Setup(bulletPrefab, 2);
         player = GameObject.Find("Player").GetComponent<Player>();

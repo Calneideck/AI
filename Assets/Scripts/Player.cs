@@ -40,20 +40,18 @@ public class Player : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.P))
             Time.timeScale = 1 - Time.timeScale;
 
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            Boid.Boids.Clear();
+            UnityEngine.SceneManagement.SceneManager.LoadScene(0);
+        }
+
         Move();
         if (Input.GetKeyDown(KeyCode.Space))
         {
             usingLaser = !usingLaser;
-            if (usingLaser)
-            {
-                laserObj.SetActive(true);
-                pistolObj.SetActive(false);
-            }
-            else
-            {
-                laserObj.SetActive(false);
-                pistolObj.SetActive(true);
-            }
+            laserObj.SetActive(usingLaser);
+            pistolObj.SetActive(!usingLaser);
             gunText.text = usingLaser ? "Laser" : "Pistol";
         }
 
